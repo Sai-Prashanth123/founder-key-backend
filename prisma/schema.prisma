@@ -1,0 +1,392 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ATTENDEE
+  ORGANIZER
+  ADMIN
+}
+
+enum UserTier {
+  FREE
+  FOUNDER
+}
+
+enum CardStatus {
+  PENDING
+  ACTIVE
+  DEACTIVATED
+  REJECTED
+}
+
+enum ConnectionStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+  COMPLETED
+}
+
+enum EventType {
+  IN_PERSON
+  VIRTUAL
+  HYBRID
+}
+
+enum EventVisibility {
+  PUBLIC
+  PRIVATE
+  UNLISTED
+}
+
+enum RegistrationStatus {
+  REGISTERED
+  ATTENDED
+  CANCELLED
+  WAITLISTED
+}
+
+enum NotificationType {
+  CONNECTION_REQUEST
+  CONNECTION_ACCEPTED
+  EVENT_REMINDER
+  FOUNDER_CARD_APPROVED
+  FOUNDER_CARD_REJECTED
+  NEW_EVENT
+  BADGE_EARNED
+  LEVEL_UP
+  SYSTEM
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  CONVERTED
+  ARCHIVED
+}
+
+model User {
+  id              String    @id @default(uuid())
+  email           String    @unique
+  password        String?
+  googleId        String?   @unique
+  authProvider    String    @default("email")
+  role            Role      @default(ATTENDEE)
+  tier            UserTier  @default(FREE)
+  isActive        Boolean   @default(true)
+  isEmailVerified Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+
+  profile             Profile?
+  founderCard         FounderCard?
+  gamification        Gamification?
+  sentConnections     Connection[]        @relation("Requester")
+  receivedConnections Connection[]        @relation("Receiver")
+  registrations       EventRegistration[]
+  organizedEvents     Event[]             @relation("Organizer")
+  notifications       Notification[]
+  userBadges          UserBadge[]
+  scoreHistory        ScoreHistory[]
+  leads               Lead[]              @relation("AttendeeLead")
+  auditLogs           AuditLog[]
+  refreshTokens       RefreshToken[]
+  eventMessages       EventMessage[]
+
+  @@index([email])
+  @@index([googleId])
+  @@index([role])
+  @@index([isActive])
+  @@map("users")
+}
+
+model Profile {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  firstName String
+  lastName  String
+  bio       String?  @db.Text
+  company   String?
+  position  String?
+  location  String?
+  avatar    String?
+  skills    String[]
+  interests String[]
+  phone     String?
+  twitter   String?
+  linkedin  String?
+  website   String?
+  instagram String?
+  email     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("profiles")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("refresh_tokens")
+}
+
+model FounderCard {
+  id         String     @id @default(uuid())
+  userId     String     @unique
+  status     CardStatus @default(PENDING)
+  qrCode     String?    @db.Text
+  qrCodeUrl  String?
+  message    String?    @db.Text
+  reason     String?    @db.Text
+  appliedAt  DateTime   @default(now())
+  reviewedAt DateTime?
+  reviewedBy String?
+  updatedAt  DateTime   @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@map("founder_cards")
+}
+
+model Connection {
+  id          String           @id @default(uuid())
+  requesterId String
+  receiverId  String
+  status      ConnectionStatus @default(PENDING)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  requester User @relation("Requester", fields: [requesterId], references: [id], onDelete: Cascade)
+  receiver  User @relation("Receiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@unique([requesterId, receiverId])
+  @@index([requesterId])
+  @@index([receiverId])
+  @@index([status])
+  @@map("connections")
+}
+
+model Event {
+  id               String          @id @default(uuid())
+  organizerId      String
+  title            String
+  description      String          @db.Text
+  startDate        DateTime
+  endDate          DateTime
+  locationType     EventType       @default(IN_PERSON)
+  address          String?
+  city             String?
+  country          String?
+  meetingUrl       String?
+  capacity         Int             @default(100)
+  ticketPrice      Decimal?        @db.Decimal(10, 2)
+  coverImage       String?
+  tags             String[]
+  status           EventStatus     @default(DRAFT)
+  category         String?
+  theme            String?         @default("default")
+  slug             String?         @unique
+  requiresApproval Boolean         @default(false)
+  waitlistEnabled  Boolean         @default(true)
+  visibility       EventVisibility @default(PUBLIC)
+  timezone         String?         @default("UTC")
+  ticketTypes      Json?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  deletedAt        DateTime?
+
+  organizer     User                @relation("Organizer", fields: [organizerId], references: [id])
+  registrations EventRegistration[]
+  leads         Lead[]
+  messages      EventMessage[]
+
+  @@index([organizerId])
+  @@index([status])
+  @@index([startDate])
+  @@index([category])
+  @@map("events")
+}
+
+model EventRegistration {
+  id           String             @id @default(uuid())
+  eventId      String
+  userId       String
+  status       RegistrationStatus @default(REGISTERED)
+  checkedIn    Boolean            @default(false)
+  checkedInAt  DateTime?
+  registeredAt DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+  @@index([eventId])
+  @@index([userId])
+  @@map("event_registrations")
+}
+
+model Gamification {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  fkScore   Int      @default(0)
+  level     Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([fkScore])
+  @@map("gamification")
+}
+
+model ScoreHistory {
+  id        String   @id @default(uuid())
+  userId    String
+  action    String
+  points    Int
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("score_history")
+}
+
+model Badge {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String
+  icon        String
+  condition   Json
+  points      Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  userBadges UserBadge[]
+
+  @@map("badges")
+}
+
+model UserBadge {
+  id       String   @id @default(uuid())
+  userId   String
+  badgeId  String
+  earnedAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge Badge @relation(fields: [badgeId], references: [id])
+
+  @@unique([userId, badgeId])
+  @@index([userId])
+  @@map("user_badges")
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  data      Json?
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model Lead {
+  id          String     @id @default(uuid())
+  eventId     String
+  attendeeId  String
+  organizerId String
+  status      LeadStatus @default(NEW)
+  notes       String?    @db.Text
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  event    Event @relation(fields: [eventId], references: [id])
+  attendee User  @relation("AttendeeLead", fields: [attendeeId], references: [id])
+
+  @@unique([eventId, attendeeId])
+  @@index([organizerId])
+  @@index([status])
+  @@map("leads")
+}
+
+model PlatformSetting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String   @db.Text
+  type      String   @default("string")
+  label     String?
+  updatedAt DateTime @updatedAt
+
+  @@map("platform_settings")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  action     String
+  resource   String
+  resourceId String?
+  metadata   Json?
+  ip         String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model EventMessage {
+  id        String   @id @default(uuid())
+  eventId   String
+  userId    String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+  @@index([createdAt])
+  @@map("event_messages")
+}

@@ -1,0 +1,102 @@
+version: '3.9'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    container_name: golden-tap-app
+    ports:
+      - '3000:3000'
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/golden_tap_db?schema=public
+      - REDIS_URL=redis://:redis_password@redis:6379
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=redis_password
+      - BULL_REDIS_URL=redis://:redis_password@redis:6379
+    volumes:
+      - ./src:/app/src:ro
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: >
+      sh -c "npx prisma migrate deploy && ts-node -r tsconfig-paths/register src/server.ts"
+    restart: unless-stopped
+    networks:
+      - golden-tap-network
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: golden-tap-postgres
+    environment:
+      POSTGRES_DB: golden_tap_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d golden_tap_db']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - golden-tap-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: golden-tap-redis
+    command: redis-server --requirepass redis_password --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - '6379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', '-a', 'redis_password', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - golden-tap-network
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: golden-tap-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@goldentap.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - '5050:80'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - golden-tap-network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  golden-tap-network:
+    driver: bridge
