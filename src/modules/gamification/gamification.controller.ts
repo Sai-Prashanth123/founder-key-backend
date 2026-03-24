@@ -41,7 +41,7 @@ export class GamificationController {
   }
 
   async getUserScore(req: Request, res: Response): Promise<void> {
-    const { id } = req.params;
+    const { id } = req.params as Record<string, string>;
     const score = await gamificationService.getUserScore(id);
     sendSuccess(res, score, 'Score retrieved');
   }

@@ -25,14 +25,14 @@ export class FounderCardsController {
 
   async approveCard(req: Request, res: Response): Promise<void> {
     const adminId = req.user!.userId;
-    const { id } = req.params;
+    const { id } = req.params as Record<string, string>;
     const card = await founderCardsService.approveCard(id, adminId);
     sendSuccess(res, card, 'Founder Card approved');
   }
 
   async rejectCard(req: Request, res: Response): Promise<void> {
     const adminId = req.user!.userId;
-    const { id } = req.params;
+    const { id } = req.params as Record<string, string>;
     const { reason } = req.body as { reason?: string };
     const card = await founderCardsService.rejectCard(id, adminId, reason);
     sendSuccess(res, card, 'Founder Card application rejected');
@@ -40,14 +40,14 @@ export class FounderCardsController {
 
   async deactivateCard(req: Request, res: Response): Promise<void> {
     const adminId = req.user!.userId;
-    const { id } = req.params;
+    const { id } = req.params as Record<string, string>;
     const card = await founderCardsService.deactivateCard(id, adminId);
     sendSuccess(res, card, 'Founder Card deactivated');
   }
 
   async reactivateCard(req: Request, res: Response): Promise<void> {
     const adminId = req.user!.userId;
-    const { id } = req.params;
+    const { id } = req.params as Record<string, string>;
     const card = await founderCardsService.reactivateCard(id, adminId);
     sendSuccess(res, card, 'Founder Card reactivated');
   }
@@ -71,7 +71,7 @@ export class FounderCardsController {
   }
 
   async getCardByQR(req: Request, res: Response): Promise<void> {
-    const { qrData } = req.params;
+    const { qrData } = req.params as Record<string, string>;
     const user = await founderCardsService.getCardByQR(qrData);
     sendSuccess(res, user, 'Profile retrieved via QR');
   }

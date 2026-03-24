@@ -29,7 +29,7 @@ export class MediaController {
   }
 
   async deleteFile(req: Request, res: Response): Promise<void> {
-    const { key } = req.params;
+    const { key } = req.params as Record<string, string>;
     if (!key) throw new BadRequestError('File key is required');
 
     // Ensure user can only delete their own files
@@ -43,7 +43,7 @@ export class MediaController {
   }
 
   async getPresignedUrl(req: Request, res: Response): Promise<void> {
-    const { key } = req.params;
+    const { key } = req.params as Record<string, string>;
     const { expiresIn } = req.query as { expiresIn?: string };
 
     const url = await mediaService.getPresignedUrl(

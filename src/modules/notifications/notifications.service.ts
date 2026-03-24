@@ -2,6 +2,7 @@ import prisma from '@config/database';
 import { NotFoundError, ForbiddenError } from '@utils/errors';
 import { parsePaginationQuery, buildPaginationMeta } from '@utils/pagination';
 import { NotificationType } from '@appTypes/index';
+import { Prisma } from '@prisma/client';
 
 // Lazy import to avoid circular dependency
 let getSocketId: ((userId: string) => Promise<string | null>) | null = null;
@@ -29,7 +30,7 @@ export class NotificationsService {
         type,
         title,
         message,
-        data: data ?? null,
+        data: data ? (data as Prisma.InputJsonValue) : undefined,
         isRead: false,
       },
     });
@@ -72,6 +73,13 @@ export class NotificationsService {
     };
   }
 
+  async getUnreadCount(userId: string): Promise<{ unreadCount: number }> {
+    const unreadCount = await prisma.notification.count({
+      where: { userId, isRead: false },
+    });
+    return { unreadCount };
+  }
+
   async markAsRead(notificationId: string, userId: string) {
     const notification = await prisma.notification.findUnique({
       where: { id: notificationId },
@@ -93,11 +101,6 @@ export class NotificationsService {
       where: { userId, isRead: false },
       data: { isRead: true },
     });
-
-    // Notify client of badge update
-    if (io) {
-      io.to(`user:${userId}`).emit('notification:allRead', { userId });
-    }
   }
 
   async deleteNotification(notificationId: string, userId: string): Promise<void> {
@@ -113,13 +116,6 @@ export class NotificationsService {
     await prisma.notification.delete({ where: { id: notificationId } });
   }
 
-  async getUnreadCount(userId: string): Promise<{ count: number }> {
-    const count = await prisma.notification.count({
-      where: { userId, isRead: false },
-    });
-    return { count };
-  }
-
   async sendBulkNotification(
     userIds: string[],
     type: NotificationType,
@@ -127,35 +123,37 @@ export class NotificationsService {
     message: string,
     data?: Record<string, unknown>
   ): Promise<void> {
-    if (userIds.length === 0) return;
+    return this.createBulkNotifications(userIds, type, title, message, data);
+  }
 
-    const notifications = await prisma.notification.createMany({
+  async createBulkNotifications(
+    userIds: string[],
+    type: NotificationType,
+    title: string,
+    message: string,
+    data?: Record<string, unknown>
+  ): Promise<void> {
+    await prisma.notification.createMany({
       data: userIds.map((userId) => ({
         userId,
         type,
         title,
         message,
-        data: data ?? null,
+        data: data ? (data as Prisma.InputJsonValue) : undefined,
         isRead: false,
       })),
     });
 
-    // Emit socket events for online users
+    // Emit to all online users
     if (io) {
       for (const userId of userIds) {
-        io.to(`user:${userId}`).emit('notification:new', {
-          type,
-          title,
-          message,
-          data,
-          isRead: false,
-          createdAt: new Date(),
-        });
+        io.to(`user:${userId}`).emit('notification:new', { type, title, message });
       }
     }
-
-    void notifications;
   }
 }
 
 export default new NotificationsService();
+
+// Suppress unused import warning
+void getSocketId;

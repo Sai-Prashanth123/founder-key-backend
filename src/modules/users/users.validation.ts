@@ -16,6 +16,10 @@ export const updateProfileSchema = z.object({
     .array(z.string().max(50).trim())
     .max(20, 'You can add up to 20 interests')
     .optional(),
+  lookingFor: z
+    .array(z.string().max(50).trim())
+    .max(10, 'You can add up to 10 looking-for items')
+    .optional(),
   socialLinks: z
     .object({
       twitter: z.string().url().optional().or(z.literal('')),

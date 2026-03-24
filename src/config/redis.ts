@@ -69,6 +69,7 @@ const memoryClient = {
     }
     return result;
   },
+  async ping(): Promise<'PONG'> { return 'PONG'; },
   async quit(): Promise<'OK'> { return 'OK'; },
   disconnect(): void {},
   status: 'ready' as const,

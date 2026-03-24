@@ -13,7 +13,7 @@ export class EventsController {
 
   async updateEvent(req: Request, res: Response): Promise<void> {
     const organizerId = req.user!.userId;
-    const { id } = req.params;
+    const { id } = req.params as Record<string, string>;
     const dto = req.body as UpdateEventDto;
     const event = await eventsService.updateEvent(id, organizerId, dto);
     sendSuccess(res, event, 'Event updated successfully');
@@ -21,13 +21,13 @@ export class EventsController {
 
   async deleteEvent(req: Request, res: Response): Promise<void> {
     const organizerId = req.user!.userId;
-    const { id } = req.params;
+    const { id } = req.params as Record<string, string>;
     await eventsService.deleteEvent(id, organizerId);
     sendSuccess(res, null, 'Event deleted successfully');
   }
 
   async getEvent(req: Request, res: Response): Promise<void> {
-    const { id } = req.params;
+    const { id } = req.params as Record<string, string>;
     const userId = req.user?.userId;
     const event = await eventsService.getEvent(id, userId);
     sendSuccess(res, event, 'Event retrieved successfully');
@@ -41,14 +41,14 @@ export class EventsController {
 
   async registerForEvent(req: Request, res: Response): Promise<void> {
     const userId = req.user!.userId;
-    const { id } = req.params;
+    const { id } = req.params as Record<string, string>;
     const result = await eventsService.registerForEvent(id, userId);
     sendSuccess(res, result.registration, result.message);
   }
 
   async cancelRegistration(req: Request, res: Response): Promise<void> {
     const userId = req.user!.userId;
-    const { id } = req.params;
+    const { id } = req.params as Record<string, string>;
     await eventsService.cancelRegistration(id, userId);
     sendSuccess(res, null, 'Registration cancelled successfully');
   }
@@ -77,7 +77,7 @@ export class EventsController {
 
   async getEventAttendees(req: Request, res: Response): Promise<void> {
     const organizerId = req.user!.userId;
-    const { id } = req.params;
+    const { id } = req.params as Record<string, string>;
     const { page, limit } = req.query as { page?: string; limit?: string };
     const result = await eventsService.getEventAttendees(
       id,
@@ -90,14 +90,14 @@ export class EventsController {
 
   async publishEvent(req: Request, res: Response): Promise<void> {
     const organizerId = req.user!.userId;
-    const { id } = req.params;
+    const { id } = req.params as Record<string, string>;
     const event = await eventsService.publishEvent(id, organizerId);
     sendSuccess(res, event, 'Event published successfully');
   }
 
   async cancelEvent(req: Request, res: Response): Promise<void> {
     const organizerId = req.user!.userId;
-    const { id } = req.params;
+    const { id } = req.params as Record<string, string>;
     await eventsService.cancelEvent(id, organizerId);
     sendSuccess(res, null, 'Event cancelled successfully');
   }

@@ -51,6 +51,8 @@ export class AuthService {
       },
       include: {
         profile: true,
+        founderCard: { select: { id: true, status: true, qrCodeUrl: true } },
+        gamification: { select: { fkScore: true, level: true } },
       },
     });
 
@@ -84,7 +86,22 @@ export class AuthService {
             lastName: user.profile.lastName,
             avatar: user.profile.avatar,
             company: user.profile.company,
+            position: user.profile.position,
+            bio: user.profile.bio,
+            location: user.profile.location,
+            linkedin: user.profile.linkedin,
+            twitter: user.profile.twitter,
+            website: user.profile.website,
+            skills: user.profile.skills,
+            interests: user.profile.interests,
+            lookingFor: user.profile.lookingFor,
           }
+        : null,
+      founderCard: user.founderCard
+        ? { id: user.founderCard.id, status: user.founderCard.status, qrCodeUrl: user.founderCard.qrCodeUrl }
+        : null,
+      gamification: user.gamification
+        ? { fkScore: user.gamification.fkScore, level: user.gamification.level }
         : null,
     };
 
@@ -94,7 +111,11 @@ export class AuthService {
   async login(dto: LoginDto): Promise<AuthResponse> {
     const user = await prisma.user.findUnique({
       where: { email: dto.email },
-      include: { profile: true },
+      include: {
+        profile: true,
+        founderCard: { select: { id: true, status: true, qrCodeUrl: true } },
+        gamification: { select: { fkScore: true, level: true } },
+      },
     });
 
     if (!user) {
@@ -132,7 +153,22 @@ export class AuthService {
             lastName: user.profile.lastName,
             avatar: user.profile.avatar,
             company: user.profile.company,
+            position: user.profile.position,
+            bio: user.profile.bio,
+            location: user.profile.location,
+            linkedin: user.profile.linkedin,
+            twitter: user.profile.twitter,
+            website: user.profile.website,
+            skills: user.profile.skills,
+            interests: user.profile.interests,
+            lookingFor: user.profile.lookingFor,
           }
+        : null,
+      founderCard: user.founderCard
+        ? { id: user.founderCard.id, status: user.founderCard.status, qrCodeUrl: user.founderCard.qrCodeUrl }
+        : null,
+      gamification: user.gamification
+        ? { fkScore: user.gamification.fkScore, level: user.gamification.level }
         : null,
     };
 
@@ -282,7 +318,11 @@ export class AuthService {
   async getMe(userId: string): Promise<AuthUser> {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      include: { profile: true },
+      include: {
+        profile: true,
+        founderCard: { select: { id: true, status: true, qrCodeUrl: true } },
+        gamification: { select: { fkScore: true, level: true } },
+      },
     });
 
     if (!user) {
@@ -302,7 +342,22 @@ export class AuthService {
             lastName: user.profile.lastName,
             avatar: user.profile.avatar,
             company: user.profile.company,
+            position: user.profile.position,
+            bio: user.profile.bio,
+            location: user.profile.location,
+            linkedin: user.profile.linkedin,
+            twitter: user.profile.twitter,
+            website: user.profile.website,
+            skills: user.profile.skills,
+            interests: user.profile.interests,
+            lookingFor: user.profile.lookingFor,
           }
+        : null,
+      founderCard: user.founderCard
+        ? { id: user.founderCard.id, status: user.founderCard.status, qrCodeUrl: user.founderCard.qrCodeUrl }
+        : null,
+      gamification: user.gamification
+        ? { fkScore: user.gamification.fkScore, level: user.gamification.level }
         : null,
     };
   }
@@ -377,7 +432,11 @@ export class AuthService {
       where: {
         OR: [{ googleId: oauthInfo.googleId }, { email: oauthInfo.email }],
       },
-      include: { profile: true },
+      include: {
+        profile: true,
+        founderCard: { select: { id: true, status: true, qrCodeUrl: true } },
+        gamification: { select: { fkScore: true, level: true } },
+      },
     });
 
     if (user) {
@@ -390,11 +449,21 @@ export class AuthService {
         updateData.isEmailVerified = true;
       }
 
+      // Update role if the user explicitly chose a different role via OAuth
+      const requestedRole = typeof dto.role === 'string' ? dto.role.toUpperCase() : undefined;
+      if (requestedRole && requestedRole !== user.role && (requestedRole === 'ATTENDEE' || requestedRole === 'ORGANIZER')) {
+        updateData.role = requestedRole;
+      }
+
       if (Object.keys(updateData).length > 0) {
         user = await prisma.user.update({
           where: { id: user.id },
           data: updateData,
-          include: { profile: true },
+          include: {
+            profile: true,
+            founderCard: { select: { id: true, status: true, qrCodeUrl: true } },
+            gamification: { select: { fkScore: true, level: true } },
+          },
         });
       }
 
@@ -410,7 +479,9 @@ export class AuthService {
       logger.info('Google OAuth: existing user logged in', { userId: user.id, email: user.email });
     } else {
       // New user — create account from Google data
-      const role = (dto.role as 'ATTENDEE' | 'ORGANIZER') ?? 'ATTENDEE';
+      // Normalize role at runtime — TypeScript cast is compile-time only
+      const rawRole = typeof dto.role === 'string' ? dto.role.toUpperCase() : '';
+      const role: 'ATTENDEE' | 'ORGANIZER' = rawRole === 'ORGANIZER' ? 'ORGANIZER' : 'ATTENDEE';
 
       user = await prisma.user.create({
         data: {
@@ -434,7 +505,11 @@ export class AuthService {
             },
           },
         },
-        include: { profile: true },
+        include: {
+          profile: true,
+          founderCard: { select: { id: true, status: true, qrCodeUrl: true } },
+          gamification: { select: { fkScore: true, level: true } },
+        },
       });
 
       // Send welcome email (non-blocking)
@@ -469,7 +544,22 @@ export class AuthService {
             lastName: user.profile.lastName,
             avatar: user.profile.avatar,
             company: user.profile.company,
+            position: user.profile.position,
+            bio: user.profile.bio,
+            location: user.profile.location,
+            linkedin: user.profile.linkedin,
+            twitter: user.profile.twitter,
+            website: user.profile.website,
+            skills: user.profile.skills,
+            interests: user.profile.interests,
+            lookingFor: user.profile.lookingFor,
           }
+        : null,
+      founderCard: user.founderCard
+        ? { id: user.founderCard.id, status: user.founderCard.status, qrCodeUrl: user.founderCard.qrCodeUrl }
+        : null,
+      gamification: user.gamification
+        ? { fkScore: user.gamification.fkScore, level: user.gamification.level }
         : null,
     };
 

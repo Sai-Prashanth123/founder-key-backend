@@ -39,7 +39,7 @@ export class GamificationService {
         userId,
         action,
         points,
-        metadata: metadata ?? null,
+        metadata: metadata ? (metadata as import('@prisma/client').Prisma.InputJsonValue) : undefined,
       },
     });
 

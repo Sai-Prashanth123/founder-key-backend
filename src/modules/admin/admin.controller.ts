@@ -33,26 +33,26 @@ export class AdminController {
   }
 
   async getUserDetail(req: Request, res: Response): Promise<void> {
-    const { id } = req.params;
+    const { id } = req.params as Record<string, string>;
     const user = await adminService.getUserDetail(id);
     sendSuccess(res, user, 'User retrieved');
   }
 
   async updateUser(req: Request, res: Response): Promise<void> {
-    const { id } = req.params;
+    const { id } = req.params as Record<string, string>;
     const dto = req.body as UpdateUserDto;
     const user = await adminService.updateUser(id, dto);
     sendSuccess(res, user, 'User updated');
   }
 
   async deleteUser(req: Request, res: Response): Promise<void> {
-    const { id } = req.params;
+    const { id } = req.params as Record<string, string>;
     await adminService.deleteUser(id);
     sendSuccess(res, null, 'User deleted');
   }
 
   async banUser(req: Request, res: Response): Promise<void> {
-    const { id } = req.params;
+    const { id } = req.params as Record<string, string>;
     const dto = req.body as BanUserDto;
     const result = await adminService.banUser(id, dto.reason);
     sendSuccess(res, result, 'User banned');
@@ -76,13 +76,13 @@ export class AdminController {
   }
 
   async updateEvent(req: Request, res: Response): Promise<void> {
-    const { id } = req.params;
+    const { id } = req.params as Record<string, string>;
     const event = await adminService.updateEvent(id, req.body as Record<string, unknown>);
     sendSuccess(res, event, 'Event updated');
   }
 
   async deleteEvent(req: Request, res: Response): Promise<void> {
-    const { id } = req.params;
+    const { id } = req.params as Record<string, string>;
     await adminService.deleteEvent(id);
     sendSuccess(res, null, 'Event deleted');
   }
@@ -108,7 +108,7 @@ export class AdminController {
   }
 
   async updateSetting(req: Request, res: Response): Promise<void> {
-    const { key } = req.params;
+    const { key } = req.params as Record<string, string>;
     const { value, type, label } = req.body as { value: string; type?: string; label?: string };
     const setting = await adminService.updateSetting(key, value, type, label);
     sendSuccess(res, setting, 'Setting updated');

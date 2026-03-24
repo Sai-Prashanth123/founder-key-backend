@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import notificationsService from './notifications.service';
-import { sendSuccess, sendPaginated } from '@utils/response';
+import { sendSuccess } from '@utils/response';
 
 export class NotificationsController {
   async getNotifications(req: Request, res: Response): Promise<void> {
@@ -12,11 +12,6 @@ export class NotificationsController {
       limit ? Number(limit) : undefined
     );
     const { notifications, unreadCount, pagination } = result;
-    const response = sendPaginated(res, notifications, pagination, 'Notifications retrieved');
-    // We need to add unreadCount to the response body; use a different approach
-    void response;
-
-    // Re-send with unreadCount included
     res.json({
       success: true,
       message: 'Notifications retrieved',
@@ -34,7 +29,7 @@ export class NotificationsController {
 
   async markAsRead(req: Request, res: Response): Promise<void> {
     const userId = req.user!.userId;
-    const { id } = req.params;
+    const { id } = req.params as Record<string, string>;
     const notification = await notificationsService.markAsRead(id, userId);
     sendSuccess(res, notification, 'Notification marked as read');
   }
@@ -47,7 +42,7 @@ export class NotificationsController {
 
   async deleteNotification(req: Request, res: Response): Promise<void> {
     const userId = req.user!.userId;
-    const { id } = req.params;
+    const { id } = req.params as Record<string, string>;
     await notificationsService.deleteNotification(id, userId);
     sendSuccess(res, null, 'Notification deleted');
   }

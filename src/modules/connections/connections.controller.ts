@@ -13,7 +13,7 @@ export class ConnectionsController {
 
   async respondToRequest(req: Request, res: Response): Promise<void> {
     const userId = req.user!.userId;
-    const { id } = req.params;
+    const { id } = req.params as Record<string, string>;
     const dto = req.body as RespondConnectionDto;
     const connection = await connectionsService.respondToRequest(id, userId, dto.action);
     sendSuccess(res, connection, `Connection request ${dto.action.toLowerCase()}ed`);
@@ -21,7 +21,7 @@ export class ConnectionsController {
 
   async removeConnection(req: Request, res: Response): Promise<void> {
     const userId = req.user!.userId;
-    const { id } = req.params;
+    const { id } = req.params as Record<string, string>;
     await connectionsService.removeConnection(id, userId);
     sendSuccess(res, null, 'Connection removed');
   }
@@ -61,7 +61,7 @@ export class ConnectionsController {
 
   async checkStatus(req: Request, res: Response): Promise<void> {
     const userId = req.user!.userId;
-    const { targetId } = req.params;
+    const { targetId } = req.params as Record<string, string>;
     const status = await connectionsService.checkConnectionStatus(userId, targetId);
     sendSuccess(res, status, 'Connection status retrieved');
   }

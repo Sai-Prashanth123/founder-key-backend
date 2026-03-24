@@ -26,6 +26,24 @@ export interface AuthUser {
     lastName: string;
     avatar: string | null;
     company: string | null;
+    position: string | null;
+    bio: string | null;
+    location: string | null;
+    linkedin: string | null;
+    twitter: string | null;
+    website: string | null;
+    skills: string[];
+    interests: string[];
+    lookingFor: string[];
+  } | null;
+  founderCard: {
+    id: string;
+    status: string;
+    qrCodeUrl: string | null;
+  } | null;
+  gamification: {
+    fkScore: number;
+    level: number;
   } | null;
 }
 

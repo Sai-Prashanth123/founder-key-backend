@@ -47,13 +47,13 @@ export class UsersController {
   }
 
   async getUserById(req: Request, res: Response): Promise<void> {
-    const { id } = req.params;
+    const { id } = req.params as Record<string, string>;
     const user = await usersService.getUserById(id);
     sendSuccess(res, user, 'User retrieved successfully');
   }
 
   async getUserStats(req: Request, res: Response): Promise<void> {
-    const { id } = req.params;
+    const { id } = req.params as Record<string, string>;
     const stats = await usersService.getUserStats(id);
     sendSuccess(res, stats, 'User stats retrieved successfully');
   }

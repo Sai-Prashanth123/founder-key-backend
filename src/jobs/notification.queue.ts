@@ -26,8 +26,9 @@ let notificationQueueInstance = noopQueue as unknown as import('bull').Queue<Not
 
 if (hasRedis) {
   try {
-    const Bull = require('bull');
-    const queue = new Bull<NotificationJobData>('notifications', {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const Bull = require('bull') as any;
+    const queue = new Bull('notifications', {
       redis: REDIS_URL,
       defaultJobOptions: {
         attempts: 3,

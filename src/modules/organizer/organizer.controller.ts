@@ -30,7 +30,7 @@ export class OrganizerController {
 
   async updateLeadStatus(req: Request, res: Response): Promise<void> {
     const organizerId = req.user!.userId;
-    const { id } = req.params;
+    const { id } = req.params as Record<string, string>;
     const { status, notes } = req.body as { status: string; notes?: string };
     const lead = await organizerService.updateLeadStatus(id, organizerId, status, notes);
     sendSuccess(res, lead, 'Lead updated');
@@ -66,14 +66,14 @@ export class OrganizerController {
 
   async getEventAnalytics(req: Request, res: Response): Promise<void> {
     const organizerId = req.user!.userId;
-    const { id } = req.params;
+    const { id } = req.params as Record<string, string>;
     const analytics = await organizerService.getEventAnalytics(id, organizerId);
     sendSuccess(res, analytics, 'Event analytics retrieved');
   }
 
   async sendEventBlast(req: Request, res: Response): Promise<void> {
     const organizerId = req.user!.userId;
-    const { id } = req.params;
+    const { id } = req.params as Record<string, string>;
     const { subject, body, audience = 'all' } = req.body as {
       subject: string;
       body: string;
@@ -85,7 +85,7 @@ export class OrganizerController {
 
   async checkInAttendee(req: Request, res: Response): Promise<void> {
     const organizerId = req.user!.userId;
-    const { id } = req.params;
+    const { id } = req.params as Record<string, string>;
     const { userId } = req.body as { userId: string };
     const registration = await organizerService.checkInAttendee(id, organizerId, userId);
     sendSuccess(res, registration, 'Attendee checked in');
@@ -93,7 +93,7 @@ export class OrganizerController {
 
   async getEventGuests(req: Request, res: Response): Promise<void> {
     const organizerId = req.user!.userId;
-    const { id } = req.params;
+    const { id } = req.params as Record<string, string>;
     const { page, limit, search, status } = req.query as {
       page?: string;
       limit?: string;
