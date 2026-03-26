@@ -15,7 +15,9 @@ export const createEventSchema = z.object({
   endDate: z.coerce.date(),
   location: locationSchema.optional(),
   capacity: z.coerce.number().int().min(1).max(100000).default(100),
-  type: z.enum(['IN_PERSON', 'VIRTUAL', 'HYBRID']).default('IN_PERSON'),
+  // Restrict event creation to in-person only.
+  // This prevents new events from being created/updated with VIRTUAL/HYBRID types.
+  type: z.enum(['IN_PERSON']).default('IN_PERSON'),
   tags: z.array(z.string().max(50).trim()).max(10).optional().default([]),
   ticketPrice: z.coerce.number().min(0).optional(),
   coverImage: z.string().optional(),
@@ -47,7 +49,8 @@ export const updateEventSchema = z.object({
   endDate: z.coerce.date().optional(),
   location: locationSchema.optional(),
   capacity: z.coerce.number().int().min(1).max(100000).optional(),
-  type: z.enum(['IN_PERSON', 'VIRTUAL', 'HYBRID']).optional(),
+  // Restrict event updates to in-person only.
+  type: z.enum(['IN_PERSON']).optional(),
   tags: z.array(z.string().max(50).trim()).max(10).optional(),
   ticketPrice: z.coerce.number().min(0).optional(),
   coverImage: z.string().optional(),
@@ -71,7 +74,8 @@ export const updateEventSchema = z.object({
 export const searchEventsSchema = z.object({
   q: z.string().max(200).optional(),
   status: z.enum(['DRAFT', 'PUBLISHED', 'CANCELLED', 'COMPLETED']).optional(),
-  type: z.enum(['IN_PERSON', 'VIRTUAL', 'HYBRID']).optional(),
+  // Restrict search filter to in-person only.
+  type: z.enum(['IN_PERSON']).optional(),
   category: z.string().max(100).optional(),
   startDate: z.coerce.date().optional(),
   endDate: z.coerce.date().optional(),

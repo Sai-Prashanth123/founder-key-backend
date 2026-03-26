@@ -8,7 +8,8 @@ process.env.JWT_ACCESS_SECRET = 'test-access-secret-key-for-testing-min-32-chars
 process.env.JWT_REFRESH_SECRET = 'test-refresh-secret-key-for-testing-min-32-chars';
 process.env.JWT_ACCESS_EXPIRES_IN = '15m';
 process.env.JWT_REFRESH_EXPIRES_IN = '7d';
-process.env.BCRYPT_ROUNDS = '4'; // Lower rounds for faster tests
+// Must satisfy env schema (min 8). Keep it reasonably fast.
+process.env.BCRYPT_ROUNDS = '8';
 process.env.REDIS_URL = process.env.TEST_REDIS_URL ?? 'redis://localhost:6379';
 process.env.REDIS_HOST = 'localhost';
 process.env.REDIS_PORT = '6379';
